@@ -7,15 +7,15 @@ class Driver:
 
 def knapsack_problem(drivers, budget):
     n = len(drivers)
-    budget = round(budget)  # Round the budget to the nearest integer
+    budget = int(budget)  # Convert budget to an integer
     dp = [[0] * (budget + 1) for _ in range(n + 1)]
 
     for i in range(1, n + 1):
         for j in range(1, budget + 1):
-            if drivers[i - 1].cost <= j:
-                dp[i][j] = max(dp[i - 1][j], dp[i - 1][j - int(drivers[i - 1].cost)] + drivers[i - 1].points)
-            else:
+            if drivers[i - 1].cost > j:
                 dp[i][j] = dp[i - 1][j]
+            else:
+                dp[i][j] = max(dp[i - 1][j], dp[i - 1][j - drivers[i - 1].cost] + drivers[i - 1].points)
 
     selected_drivers = []
     j = budget
@@ -24,7 +24,7 @@ def knapsack_problem(drivers, budget):
             selected_drivers.append(drivers[i - 1])
             j -= int(drivers[i - 1].cost)
 
-    return selected_drivers[::-1]  # Reverse the selected drivers list
+    return selected_drivers
 
 def main():
     # Gather data
@@ -79,25 +79,33 @@ def main():
     remaining_constructor_budget_per_team = remaining_constructor_budget / 2
 
     # Create Driver objects
-    drivers = [Driver(driver["name"], driver["team"], driver["cost"], driver["points"]) for driver in drivers_data]
+    drivers = [Driver(driver["name"], driver["team"], int(driver["cost"]), driver["points"]) for driver in drivers_data]
 
     # Solve knapsack problem for selecting drivers
-    selected_drivers = knapsack_problem(drivers, driver_budget)
+    selected_drivers = knapsack_problem(drivers, int(driver_budget))  # Convert driver_budget to an integer
 
     # Output selected drivers
-    total_points = sum(driver.points for driver in selected_drivers)
-    total_cost = sum(driver.cost for driver in selected_drivers)
     print("Selected Drivers:")
+    driver_counter = 0
     for driver in selected_drivers:
+        if driver_counter >= 5:  # Check if the maximum number of drivers has been reached
+            break
         print(f"{driver.name} ({driver.team}): Cost - {driver.cost}, Points - {driver.points}")
+        driver_counter += 1
 
     # Allocate remaining budget to constructor teams
     print("\nSelected Constructor Teams:")
-    remaining_budget_per_team = remaining_constructor_budget_per_team
+    team_counter = 0
     for team, cost in team_costs.items():
-        if remaining_budget_per_team >= cost:
+        if team_counter >= 2:  # Check if the maximum number of teams has been reached
+            break
+        if cost <= remaining_constructor_budget_per_team:
             print(f"{team}: Cost - {cost}")
-            remaining_budget_per_team -= cost
+            remaining_constructor_budget_per_team -= cost
+            team_counter += 1
+
+    print("\nTotal drivers selected:", min(driver_counter, 5))  # Ensure the driver count does not exceed 5
+    print("Total teams selected:", min(team_counter, 2))  # Ensure the team count does not exceed 2
 
 if __name__ == "__main__":
     main()
